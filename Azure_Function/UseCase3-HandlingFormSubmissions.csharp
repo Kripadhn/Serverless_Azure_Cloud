@@ -1,0 +1,28 @@
+# An Azure Function can be triggered by an HTTP request to a specific URL. 
+# The function can then extract the data from the request and store it in an Azure Cosmos DB database.
+
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+namespace Company.Function
+{
+    public static class HandleFormSubmission
+    {
+        [FunctionName("HandleFormSubmission")]
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [CosmosDB("database", "collection", ConnectionStringSetting = "CosmosDBConnection")] IAsyncCollector<dynamic> documents,
+            ILogger log)
+        {
+            log.LogInformation("Handling form submission.");
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var data = JsonConvert.DeserializeObject<dynamic>(requestBody);
+            await documents.AddAsync(data);
+            return new OkObjectResult("Form submitted successfully");
+        }
+    }
+}

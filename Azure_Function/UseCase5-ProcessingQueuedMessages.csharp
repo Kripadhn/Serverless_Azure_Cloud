@@ -1,0 +1,23 @@
+# Azure Functions can be triggered by new messages added to an Azure Service Bus queue. The function can then process the message 
+# and perform any required actions, such as sending an email, updating a database, or triggering another function.
+
+using System;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+namespace Company.Function
+{
+    public static class ProcessQueuedMessage
+    {
+        [FunctionName("ProcessQueuedMessage")]
+        public static void Run(
+            [ServiceBusTrigger("queue", Connection = "ServiceBusConnection")] string message,
+            ILogger log)
+        {
+            log.LogInformation("Processing queued message.");
+            var data = JsonConvert.DeserializeObject<dynamic>(message);
+            // Perform processing logic here
+        }
+    }
+}

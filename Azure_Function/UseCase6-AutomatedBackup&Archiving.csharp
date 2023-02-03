@@ -1,0 +1,32 @@
+# An Azure Function can be triggered on a schedule to backup data from an Azure SQL Database to Azure Blob Storage. The function can 
+# also automatically archive older data that is no longer needed, freeing up space and improving database performance.
+
+using System;
+using System.Data.SqlClient;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+
+namespace Company.Function
+{
+    public static class BackupAndArchive
+    {
+        [FunctionName("BackupAndArchive")]
+        public static void Run(
+            [TimerTrigger("0 0 0 * * *")] TimerInfo timer,
+            [Blob("backups/{DateTime.UtcNow.ToString("yyyy-MM-dd")}.bak", FileAccess.Write)] Stream backupStream,
+            ILogger log)
+        {
+            log.LogInformation("Backing up and archiving database.");
+            using (var connection = new SqlConnection(Environment.GetEnvironmentVariable("SqlConnectionString")))
+            {
+                connection.Open();
+                using (var command = new SqlCommand("BACKUP DATABASE [database] TO DISK = @backup", connection))
+                {
+                    command.Parameters.AddWithValue("@backup", backupStream);
+                    command.ExecuteNonQuery();
+                }
+                // Perform archiving logic here
+            }
+        }
+    }
+}

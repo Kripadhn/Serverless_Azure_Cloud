@@ -1,0 +1,1 @@
+Azure API Management: Azure API Management is a serverless service that acts as a front-door for your APIs. It provides a centralized place to manage, secure, and scale your APIs. Real-world use-cases include exposing internal APIs to external developers, providing a platform for API developers to create and manage their APIs, and securing and monitoring API access.

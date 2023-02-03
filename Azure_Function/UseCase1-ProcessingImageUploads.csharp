@@ -1,0 +1,26 @@
+# An Azure Function can be triggered by a new image being uploaded to Azure Blob Storage. The function can then process the image and store it in another Azure Blob Storage container, all without the need for a server to be running.
+
+using System.IO;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+namespace Company.Function
+{
+    public static class ProcessImageUpload
+    {
+        [FunctionName("ProcessImageUpload")]
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [Blob("images/{rand-guid}", FileAccess.ReadWrite)] Stream imageStream,
+            ILogger log)
+        {
+            log.LogInformation("Processing image upload.");
+            // processing logic here
+            return new OkObjectResult("Image processed successfully");
+        }
+    }
+}

@@ -1,0 +1,35 @@
+using System;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.EventGrid.Models;
+using Microsoft.Azure.WebJobs.Extensions.EventGrid;
+using Microsoft.Exchange.WebServices.Data;
+
+namespace EventGridFunctions
+{
+    public static class NewPhotoFunction
+    {
+        [FunctionName("NewPhotoFunction")]
+        public static void Run([EventGridTrigger]EventGridEvent eventGridEvent, ILogger log)
+        {
+            log.LogInformation(eventGridEvent.Data.ToString());
+            dynamic data = eventGridEvent.Data;
+            string userId = data.userId;
+            string photoUrl = data.photoUrl;
+
+            // Send email to user with the details of the new photo
+            ExchangeService service = new ExchangeService();
+            service.Credentials = new WebCredentials("user@example.com", "password");
+            service.Url = new Uri("https://outlook.office365.com/EWS/Exchange.asmx");
+            EmailMessage email = new EmailMessage(service);
+            email.ToRecipients.Add(userId);
+            email.Subject = "New photo added";
+            email.Body = new MessageBody("A new photo has been added to your account: " + photoUrl);
+            email.Send();
+        }
+    }
+}
+
+
+//In this example, an Azure Function named "NewPhotoFunction" is defined and triggered by Azure Event Grid. When a new photo is added, Azure Event Grid will publish an event with the details of the photo, which will trigger the function. 
+The function will then use the Office 365 connection to send an email to the user with the details of the new photo.

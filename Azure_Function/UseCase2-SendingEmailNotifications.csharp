@@ -1,0 +1,35 @@
+# An Azure Function can be triggered by a new record being added to an Azure Cosmos DB database. 
+# The function can then extract the relevant information from the record and send an email notification using Azure SendGrid
+
+using System;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using SendGrid.Helpers.Mail;
+
+namespace Company.Function
+{
+    public static class SendEmailNotification
+    {
+        [FunctionName("SendEmailNotification")]
+        public static void Run(
+            [CosmosDBTrigger("database", "collection", ConnectionStringSetting = "CosmosDBConnection")]
+                IReadOnlyList<Document> documents,
+            [SendGrid(ApiKey = "SendGridApiKey")] out SendGridMessage message,
+            ILogger log)
+        {
+            log.LogInformation("Sending email notification.");
+            var email = documents[0].GetPropertyValue<string>("email");
+            var subject = documents[0].GetPropertyValue<string>("subject");
+            var body = documents[0].GetPropertyValue<string>("body");
+            
+            message = new SendGridMessage
+            {
+                From = new EmailAddress("noreply@example.com"),
+                Subject = subject,
+                PlainTextContent = body,
+                HtmlContent = body
+            };
+            message.AddTo(new EmailAddress(email));
+        }
+    }
+}

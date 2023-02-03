@@ -1,0 +1,36 @@
+# An Azure Function can be triggered by a new image being uploaded to Azure Blob Storage. The function can then generate a thumbnail of the image, store it in 
+# another Azure Blob Storage container, and update the original image's metadata to include a reference to the thumbnail.   
+
+using System.IO;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+
+namespace Company.Function
+{
+    public static class GenerateThumbnail
+    {
+        [FunctionName("GenerateThumbnail")]
+        public static async Task<IActionResult> Run(
+            [BlobTrigger("images/{name}", Connection = "BlobStorageConnection")] Stream imageStream,
+            [Blob("thumbnails/{name}", FileAccess.ReadWrite)] Stream thumbnailStream,
+            string name,
+            ILogger log)
+        {
+            log.LogInformation("Generating thumbnail.");
+            using (var image = Image.Load(imageStream))
+            {
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Size = new Size(100, 100),
+                    Mode = ResizeMode.Max
+                }));
+                image.Save(thumbnailStream, new JpegEncoder());
+            }
+            return new OkObjectResult("Thumbnail generated successfully");
+        }
+    }
+}

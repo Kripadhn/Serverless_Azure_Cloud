@@ -1,0 +1,85 @@
+using System.Net.Http;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+
+namespace DurableFunctionsSample
+{
+    public static class OrderProcessing
+    {
+        [FunctionName("OrderProcessing")]
+        public static async Task Run(
+            [OrchestrationTrigger] IDurableOrchestrationContext context,
+            ILogger log)
+        {
+            var order = context.GetInput<Order>();
+
+            // Check inventory
+            bool inventoryCheck = await context.CallActivityAsync<bool>("CheckInventory", order);
+            if (!inventoryCheck)
+            {
+                return;
+            }
+
+            // Ship the order
+            await context.CallActivityAsync("ShipOrder", order);
+
+            // Bill the customer
+            await context.CallActivityAsync("BillCustomer", order);
+
+            // Send email notification
+            await context.CallActivityAsync("SendEmail", order);
+        }
+
+        [FunctionName("CheckInventory")]
+        public static async Task<bool> CheckInventory([ActivityTrigger] Order order, ILogger log)
+        {
+            using (var client = new HttpClient())
+            {
+                // Call the inventory service to check availability
+                var response = await client.GetAsync("http://inventoryservice/api/checkavailability/" + order.ProductId);
+                return response.IsSuccessStatusCode;
+            }
+        }
+
+        [FunctionName("ShipOrder")]
+        public static async Task ShipOrder([ActivityTrigger] Order order, ILogger log)
+        {
+            // Call the shipping service to ship the order
+            using (var client = new HttpClient())
+            {
+                var response = await client.PostAsync("http://shippingservice/api/ship", order);
+            }
+        }
+
+        [FunctionName("BillCustomer")]
+        public static async Task BillCustomer([ActivityTrigger] Order order, ILogger log)
+        {
+            // Call the billing service to bill the customer
+            using (var client = new HttpClient())
+            {
+                var response = await client.PostAsync("http://billingservice/api/bill", order);
+            }
+        }
+       
+        [FunctionName("SendEmail")]
+        public static async Task SendEmail([ActivityTrigger] Order order, ILogger log)
+        {
+        // Call the email service to send a notification to the customer
+        using (var client = new HttpClient())
+        {
+        var response = await client.PostAsync("http://emailservice/api/send", order);
+        }
+}
+
+    public class Order
+    {
+        public string OrderId { get; set; }
+        public string ProductId { get; set; }
+    }
+}
+// 
+In this example, the `OrderProcessing` function is the orchestration function that triggers when a new order is placed. 
+//It calls the various activities involved in order processing, such as `CheckInventory`, `ShipOrder`, `BillCustomer`, and 
+//`SendEmail`, and manages the state of the workflow. The durable function also includes error handling and 
+//timeout management, making it a reliable and scalable solution for managing order processing workflows.

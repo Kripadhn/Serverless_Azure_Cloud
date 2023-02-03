@@ -1,0 +1,1 @@
+Azure Cosmos DB: Azure Cosmos DB is a serverless NoSQL database service that provides a globally distributed, multi-model database solution. It supports multiple data models including document, key-value, graph, and columnar. Real-world use-cases include storing and accessing massive amounts of unstructured and structured data for web, mobile, gaming, and IoT applications.
